@@ -11,17 +11,43 @@ from pdns_client import PowerDNSClient
 from hetzner_client import HetznerDNSClient, HETZNER_DEFAULT_NAMESERVERS
 from dkim_generator import get_or_generate_dkim
 
+import socket
+from urllib.parse import urlparse
+
 # Environment configurations
 POWERDNS_ADMIN_BASE_URL = os.getenv("POWERDNS_ADMIN_BASE_URL", "")
 POWERDNS_ADMIN_API_KEY = os.getenv("POWERDNS_ADMIN_API_KEY", "")
 HETZNER_API_KEY = os.getenv("HETZNER_API_KEY", "") or os.getenv("HETZNER_API_TOKEN", "")
 
-PRIMARY_NAMESERVER_IP = os.getenv("PRIMARY_NAMESERVER_IP", "134.255.225.220")
-PRIMARY_NAMESERVER_PORT = int(os.getenv("PRIMARY_NAMESERVER_PORT", "53"))
-PRIMARY_NAMESERVER_TSIG_KEY = os.getenv("PRIMARY_NAMESERVER_TSIG_KEY", "")
-PRIMARY_NAMESERVER_TSIG_ALGORITHM = os.getenv("PRIMARY_NAMESERVER_TSIG_ALGORITHM", "hmac-sha256")
+def get_primary_ip() -> str:
+    """
+    Returns the primary nameserver IP for Hetzner secondary AXFR transfer.
+    Falls back to resolving the host from POWERDNS_ADMIN_BASE_URL if not explicitly specified.
+    """
+    explicit = os.getenv("PRIMARY_IP") or os.getenv("primary_ip") or os.getenv("PRIMARY_NAMESERVER_IP")
+    if explicit and explicit.strip():
+        return explicit.strip()
 
-MAIN_NAMESERVERS = [ns.strip() for ns in os.getenv("MAIN_NAMESERVERS", "ns1.ternis.net.").split(",") if ns.strip()]
+    pdns_url = (os.getenv("POWERDNS_ADMIN_BASE_URL") or os.getenv("powerdns_admin_base_url") or "").strip()
+    if pdns_url:
+        try:
+            parsed = urlparse(pdns_url if "://" in pdns_url else f"http://{pdns_url}")
+            host = parsed.hostname
+            if host:
+                resolved = socket.gethostbyname(host)
+                if resolved and not resolved.startswith("127."):
+                    return resolved
+        except Exception:
+            pass
+
+    return "134.255.225.220"
+
+PRIMARY_NAMESERVER_IP = get_primary_ip()
+PRIMARY_NAMESERVER_PORT = int(os.getenv("PRIMARY_PORT") or os.getenv("primary_port") or os.getenv("PRIMARY_NAMESERVER_PORT", "53"))
+PRIMARY_NAMESERVER_TSIG_KEY = os.getenv("TSIG_KEY") or os.getenv("tsig_key") or os.getenv("PRIMARY_NAMESERVER_TSIG_KEY", "")
+PRIMARY_NAMESERVER_TSIG_ALGORITHM = os.getenv("TSIG_ALGORITHM") or os.getenv("tsig_algorithm") or os.getenv("PRIMARY_NAMESERVER_TSIG_ALGORITHM", "hmac-sha256")
+
+MAIN_NAMESERVERS = [ns.strip() for ns in (os.getenv("MAIN_NAMESERVERS") or os.getenv("main_nameservers") or "ns1.ternis.net.").split(",") if ns.strip()]
 HETZNER_NAMESERVERS = [ns["name"] for ns in HETZNER_DEFAULT_NAMESERVERS]
 
 MAIL_HOST = os.getenv("MAIL_HOST", "one.mx.ternis.net")

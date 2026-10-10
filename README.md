@@ -102,10 +102,13 @@ HETZNER_API_KEY=your_hetzner_api_token_here
 HETZNER_API_BASE_URL=https://api.hetzner.cloud/v1
 
 # Primary Nameserver (The Master server IP that Hetzner secondary will AXFR from)
-PRIMARY_NAMESERVER_IP=134.255.225.220
-PRIMARY_NAMESERVER_PORT=53
-PRIMARY_NAMESERVER_TSIG_KEY=
-PRIMARY_NAMESERVER_TSIG_ALGORITHM=hmac-sha256
+# PRIMARY_IP: IP address of primary DNS server (falls back to the IP resolved from POWERDNS_ADMIN_BASE_URL if left blank)
+PRIMARY_IP=134.255.225.220
+PRIMARY_PORT=53
+
+# tsig_key / tsig_algorithm: Optional, but required if your primary server enforces TSIG authentication for AXFR/NOTIFY.
+TSIG_KEY=
+TSIG_ALGORITHM=hmac-sha256
 
 # Main Authoritative Nameservers (your primary NS list, comma-separated)
 MAIN_NAMESERVERS=ns1.ternis.net.
