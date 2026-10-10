@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ternis DNS Zone Provisioner</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --bg-card: #f8fafc;
+            --bg-hover: #f1f5f9;
+            --border-color: #e2e8f0;
+            --text-color: #0f172a;
+            --text-muted: #64748b;
+            --primary: #0f172a;
+            --primary-hover: #1e293b;
+            --primary-text: #ffffff;
+            --success: #15803d;
+            --success-bg: #f0fdf4;
+            --success-border: #bbf7d0;
+            --error: #b91c1c;
+            --error-bg: #fef2f2;
+            --error-border: #fecaca;
+            --warning: #b45309;
+            --warning-bg: #fffbeb;
+            --warning-border: #fef3c7;
+            --info: #0369a1;
+            --info-bg: #f0f9ff;
+            --info-border: #bae6fd;
+            --code-bg: #f1f5f9;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #090d16;
+            --bg-card: #0f172a;
+            --bg-hover: #1e293b;
+            --border-color: #334155;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #f8fafc;
+            --primary-hover: #e2e8f0;
+            --primary-text: #090d16;
+            --success: #22c55e;
+            --success-bg: #052e16;
+            --success-border: #166534;
+            --error: #ef4444;
+            --error-bg: #450a0a;
+            --error-border: #991b1b;
+            --warning: #f59e0b;
+            --warning-bg: #451a03;
+            --warning-border: #92400e;
+            --info: #38bdf8;
+            --info-bg: #082f49;
+            --info-border: #0369a1;
+            --code-bg: #020617;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+            padding: 24px 16px;
+        }
+
+        .container {
+            max-width: 980px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+        }
+
+        .brand-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+        }
+
+        .nav-link:hover {
+            color: var(--text-color);
+            background: var(--bg-hover);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            background: var(--primary);
+            color: var(--primary-text);
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+        }
+
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            outline: none;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--text-color);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Status Banner */
+        .status-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 0.82rem;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot-ok { background: var(--success); }
+        .status-dot-warn { background: var(--warning); }
+        .status-dot-err { background: var(--error); }
+
+        /* Mode Selector Radio Group */
+        .mode-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .mode-card {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px 14px;
+            background: var(--bg-color);
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .mode-card.active {
+            border-color: var(--text-color);
+            background: var(--bg-hover);
+        }
+
+        .mode-card input[type="radio"] {
+            margin-top: 3px;
+        }
+
+        .mode-card-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .mode-card-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: var(--success-bg);
+            border: 1px solid var(--success-border);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: var(--error-bg);
+            border: 1px solid var(--error-border);
+            color: var(--error);
+        }
+
+        .alert-info {
+            background: var(--info-bg);
+            border: 1px solid var(--info-border);
+            color: var(--info);
+        }
+
+        /* Table */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--bg-hover);
+        }
+
+        /* Step Log */
+        .step-list {
+            list-style: none;
+            margin-top: 12px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            padding: 6px 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .step-item:last-child {
+            border-bottom: none;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            background: var(--bg-hover);
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="brand-title">Ternis DNS Zone Provisioner</h1>
+                    <p class="brand-subtitle">PowerDNS-Admin Master &bull; Hetzner Cloud Secondary &bull; Mail Server Records</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="/app-accounts/" class="nav-link" title="Open Mail Account Manager" id="headerMailManagerLink">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    <span>Mail Account Manager</span>
+                </a>
+                <button class="theme-toggle" id="btnThemeToggle" title="Toggle theme">
+                    <svg id="themeIconSun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg id="themeIconMoon" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- System Status Bar -->
+        <div class="status-bar" id="statusBar">
+            <div class="status-pill">
+                <span class="status-dot" id="dotPdns"></span>
+                <span>PowerDNS-Admin: <strong id="lblPdnsStatus">Checking...</strong></span>
+            </div>
+            <div class="status-pill">
+                <span class="status-dot" id="dotHetzner"></span>
+                <span>Hetzner Cloud DNS: <strong id="lblHetznerStatus">Checking...</strong></span>
+            </div>
+            <div class="status-pill">
+                <span>Mail Gateway: <strong id="lblMailHost">one.mx.ternis.net</strong></span>
+            </div>
+        </div>
+
+        <!-- Global Alert Box -->
+        <div id="alertBox" class="alert hidden"></div>
+
+        <!-- Domain Provisioning Form Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Provision New DNS Zone
+                </h2>
+                <p class="card-desc">Enter the domain name to create a primary PowerDNS master zone, synchronize secondary slave zone in Hetzner Cloud, and configure mail records.</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Domain Name</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="inputDomain" class="form-input" placeholder="example.com or cloud.example.com" autocomplete="off" autofocus>
+                    <button class="btn btn-secondary" id="btnInspectDomain" onclick="inspectDomain()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <span>Analyze</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mode Selection (Auto-filled on analyze) -->
+            <div class="form-group" id="modeSelectorGroup">
+                <label class="form-label">Provisioning Strategy</label>
+                <div class="mode-cards">
+                    <label class="mode-card active" id="modeCardApex">
+                        <input type="radio" name="provisionMode" value="apex" checked>
+                        <div>
+                            <div class="mode-card-title">Apex Domain</div>
+                            <div class="mode-card-desc">Creates Master Zone in PowerDNS, registers Secondary Zone in Hetzner Cloud, and writes mail records.</div>
+                        </div>
+                    </label>
+
+                    <label class="mode-card" id="modeCardSubParent">
+                        <input type="radio" name="provisionMode" value="subdomain_parent">
+                        <div>
+                            <div class="mode-card-title">Subdomain inside Existing Parent Zone (Recommended for Mail Subdomains)</div>
+                            <div class="mode-card-desc" id="subParentDesc">Injects subdomain mail records directly into the parent zone. No new Hetzner zone needed (inherited via AXFR).</div>
+                        </div>
+                    </label>
+
+                    <label class="mode-card" id="modeCardSubDedicated">
+                        <input type="radio" name="provisionMode" value="subdomain_dedicated">
+                        <div>
+                            <div class="mode-card-title">Dedicated Delegated Subdomain Zone</div>
+                            <div class="mode-card-desc">Creates a separate Master zone in PowerDNS, delegates NS from parent, and registers a dedicated secondary zone in Hetzner.</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Advanced Configuration Accordion -->
+            <div style="margin: 16px 0;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnToggleAdvanced" onclick="toggleAdvanced()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <span>Advanced Nameserver & Server Settings</span>
+                </button>
+            </div>
+
+            <div id="advancedSettings" class="hidden" style="padding: 16px; border: 1px dashed var(--border-color); border-radius: 6px; margin-bottom: 20px;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Main Authoritative Nameservers</label>
+                        <input type="text" id="inputMainNs" class="form-input" placeholder="ns1.ternis.net.">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hetzner Secondary Nameservers</label>
+                        <input type="text" id="inputHetznerNs" class="form-input" value="ns1.first-ns.de., robotns2.second-ns.de., robotns3.second-ns.com." readonly style="opacity: 0.8;">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Primary Nameserver IP (for AXFR)</label>
+                        <input type="text" id="inputPrimaryIp" class="form-input" placeholder="134.255.225.220">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mail Gateway Hostname</label>
+                        <input type="text" id="inputMailHost" class="form-input" placeholder="one.mx.ternis.net">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Custom Postmaster Email (Optional)</label>
+                    <input type="email" id="inputPostmasterEmail" class="form-input" placeholder="admin@my-corporate-email.com">
+                    <span style="font-size: 0.78rem; color: var(--text-muted);">If provided, creates a <code>_postmaster</code> TXT record for zero-credential login verification routing.</span>
+                </div>
+            </div>
+
+            <button class="btn" style="width: 100%; padding: 12px;" id="btnProvision" onclick="executeProvision()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span>Provision DNS Zone & Records</span>
+            </button>
+        </div>
+
+        <!-- Provisioning Result Card -->
+        <div id="resultCard" class="card hidden">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h2 class="card-title" style="color: var(--success);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        DNS Zone Successfully Provisioned
+                    </h2>
+                    <p class="card-desc" id="resultDesc">Zone and mail server records are live.</p>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="dismissResultCard()">Close</button>
+            </div>
+
+            <!-- Direct Link to Ternis Mail Manager -->
+            <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <strong style="font-size: 0.95rem;">Ready to create mailboxes?</strong>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Jump directly into Ternis Mail Manager to create Nextcloud, WordPress, or backend application mail accounts.</div>
+                </div>
+                <a href="#" id="btnOpenMailManager" class="btn" target="_blank">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                    <span>Open in Ternis Mail Manager &rarr;</span>
+                </a>
+            </div>
+
+            <!-- Execution Steps Log -->
+            <div style="margin-bottom: 20px;">
+                <strong style="font-size: 0.85rem;">Steps Completed:</strong>
+                <ul class="step-list" id="stepsList"></ul>
+            </div>
+
+            <!-- Configured DNS Records Table -->
+            <div>
+                <strong style="font-size: 0.85rem;">Provisioned DNS Records:</strong>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Record Name</th>
+                                <th>Value / Content</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultRecordsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Managed Zones Explorer Card -->
+        <div class="card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 class="card-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        PowerDNS Master Zones
+                    </h2>
+                    <p class="card-desc">Active zones currently hosted on the PowerDNS authoritative server.</p>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="loadZoneList()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Zone Name</th>
+                            <th>Kind</th>
+                            <th>Serial</th>
+                            <th style="text-align: right;">Quick Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="zonesTableBody">
+                        <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 18px;">Loading zones...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/dns-api/v1';
+
+        // --- Theme Engine ---
+        function initTheme() {
+            const saved = localStorage.getItem('ternis_theme') || 'dark';
+            applyTheme(saved);
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('ternis_theme', theme);
+            const isDark = theme === 'dark';
+            document.getElementById('themeIconSun').classList.toggle('hidden', isDark);
+            document.getElementById('themeIconMoon').classList.toggle('hidden', !isDark);
+        }
+
+        document.getElementById('btnThemeToggle').addEventListener('click', () => {
+            const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+            applyTheme(cur === 'dark' ? 'light' : 'dark');
+        });
+
+        // --- Mode Selector Listeners ---
+        document.querySelectorAll('input[name="provisionMode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+                e.target.closest('.mode-card').classList.add('active');
+            });
+        });
+
+        function toggleAdvanced() {
+            const el = document.getElementById('advancedSettings');
+            el.classList.toggle('hidden');
+        }
+
+        function showAlert(msg, type = 'error') {
+            const box = document.getElementById('alertBox');
+            box.className = `alert alert-${type}`;
+            box.textContent = msg;
+            box.classList.remove('hidden');
+            box.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function dismissAlert() {
+            document.getElementById('alertBox').classList.add('hidden');
+        }
+
+        function dismissResultCard() {
+            document.getElementById('resultCard').classList.add('hidden');
+        }
+
+        // --- Load System Health & Defaults ---
+        async function loadHealthAndConfig() {
+            try {
+                const [hRes, cRes] = await Promise.all([
+                    fetch(`${API_BASE}/health`),
+                    fetch(`${API_BASE}/config`)
+                ]);
+
+                const hData = await hRes.json();
+                const cData = await cRes.json();
+
+                // Status bar
+                const dotP = document.getElementById('dotPdns');
+                const lblP = document.getElementById('lblPdnsStatus');
+                if (hData.powerdns && hData.powerdns.connected) {
+                    dotP.className = 'status-dot status-dot-ok';
+                    lblP.textContent = `Connected (${hData.powerdns.version || 'v1'})`;
+                } else {
+                    dotP.className = 'status-dot status-dot-warn';
+                    lblP.textContent = hData.powerdns ? (hData.powerdns.error || 'Disconnected') : 'Not Configured';
+                }
+
+                const dotH = document.getElementById('dotHetzner');
+                const lblH = document.getElementById('lblHetznerStatus');
+                if (hData.hetzner && hData.hetzner.connected) {
+                    dotH.className = 'status-dot status-dot-ok';
+                    lblH.textContent = 'Connected (Secondary API)';
+                } else {
+                    dotH.className = 'status-dot status-dot-warn';
+                    lblH.textContent = hData.hetzner ? (hData.hetzner.error || 'Disconnected') : 'Not Configured';
+                }
+
+                if (cData.mail_host) {
+                    document.getElementById('lblMailHost').textContent = cData.mail_host;
+                    document.getElementById('inputMailHost').value = cData.mail_host;
+                }
+
+                if (cData.main_nameservers) {
+                    document.getElementById('inputMainNs').value = cData.main_nameservers.join(', ');
+                }
+
+                if (cData.primary_nameserver_ip) {
+                    document.getElementById('inputPrimaryIp').value = cData.primary_nameserver_ip;
+                }
+
+                if (cData.mail_manager_url) {
+                    document.getElementById('headerMailManagerLink').href = cData.mail_manager_url;
+                }
+            } catch (err) {
+                console.warn('Could not load health status:', err);
+            }
+        }
+
+        // --- Inspect Domain ---
+        async function inspectDomain() {
+            const raw = document.getElementById('inputDomain').value.trim();
+            if (!raw) {
+                showAlert('Please enter a domain name.');
+                return;
+            }
+
+            dismissAlert();
+            const btn = document.getElementById('btnInspectDomain');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_BASE}/domain/inspect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ domain: raw })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    showAlert(data.detail || 'Inspection failed.');
+                    return;
+                }
+
+                const info = data.domain_info;
+                if (info.is_subdomain) {
+                    // It is a subdomain
+                    document.getElementById('subParentDesc').textContent =
+                        data.parent_pdns_exists
+                            ? `Injects records for '${info.domain}' directly into detected parent zone '${info.parent_domain}'.`
+                            : `Parent zone '${info.parent_domain}' not in PowerDNS. Consider dedicated zone.`;
+
+                    if (data.recommended_mode === 'subdomain_parent') {
+                        selectMode('subdomain_parent');
+                    } else {
+                        selectMode('subdomain_dedicated');
+                    }
+                } else {
+                    selectMode('apex');
+                }
+
+                showAlert(`Domain inspected: ${info.domain} (${info.is_subdomain ? 'Subdomain' : 'Apex Domain'})`, 'info');
+            } catch (err) {
+                showAlert('Network error inspecting domain.');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function selectMode(mode) {
+            document.querySelectorAll('input[name="provisionMode"]').forEach(r => {
+                if (r.value === mode) {
+                    r.checked = true;
+                    document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+                    r.closest('.mode-card').classList.add('active');
+                }
+            });
+        }
+
+        // --- Provision Execution ---
+        async function executeProvision() {
+            const domain = document.getElementById('inputDomain').value.trim();
+            if (!domain) {
+                showAlert('Please enter a domain name.');
+                return;
+            }
+
+            dismissAlert();
+            const mode = document.querySelector('input[name="provisionMode"]:checked')?.value || 'auto';
+            const mainNsRaw = document.getElementById('inputMainNs').value.trim();
+            const mainNs = mainNsRaw ? mainNsRaw.split(',').map(s => s.trim()).filter(Boolean) : null;
+            const primaryIp = document.getElementById('inputPrimaryIp').value.trim() || null;
+            const mailHost = document.getElementById('inputMailHost').value.trim() || null;
+            const postmasterEmail = document.getElementById('inputPostmasterEmail').value.trim() || null;
+
+            const btn = document.getElementById('btnProvision');
+            btn.disabled = true;
+            btn.innerText = 'Provisioning Zone & Syncing Hetzner...';
+
+            try {
+                const res = await fetch(`${API_BASE}/provision`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        domain: domain,
+                        mode: mode,
+                        main_nameservers: mainNs,
+                        primary_ip: primaryIp,
+                        mail_host: mailHost,
+                        postmaster_email: postmasterEmail,
+                        include_mail_records: true
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    showAlert(data.detail || 'Provisioning failed.');
+                    return;
+                }
+
+                renderProvisionSuccess(data);
+                loadZoneList();
+            } catch (err) {
+                showAlert('Network error executing provisioning.');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Provision DNS Zone & Records';
+            }
+        }
+
+        function renderProvisionSuccess(data) {
+            document.getElementById('resultDesc').textContent =
+                `Domain '${data.domain}' successfully configured (Mode: ${data.mode}).`;
+
+            // Mail manager button
+            const mmBtn = document.getElementById('btnOpenMailManager');
+            mmBtn.href = data.mail_manager_url || `/app-accounts/?domain=${encodeURIComponent(data.domain)}`;
+
+            // Steps list
+            const stepsList = document.getElementById('stepsList');
+            stepsList.innerHTML = '';
+            (data.steps_completed || []).forEach(step => {
+                const li = document.createElement('li');
+                li.className = 'step-item';
+                li.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>${escapeHtml(step)}</span>
+                `;
+                stepsList.appendChild(li);
+            });
+
+            // Records table
+            const tbody = document.getElementById('resultRecordsBody');
+            tbody.innerHTML = '';
+            (data.records || []).forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${r.type}</strong></td>
+                    <td style="font-family: monospace; font-size: 0.82rem;">${escapeHtml(r.name)}</td>
+                    <td style="font-family: monospace; font-size: 0.8rem; max-width: 380px; overflow-wrap: break-word;">${escapeHtml(r.value)}</td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-secondary btn-sm" onclick="copyText('${escapeAttr(r.value)}')">
+                            Copy
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('resultCard').classList.remove('hidden');
+            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- Active Zones List ---
+        async function loadZoneList() {
+            const tbody = document.getElementById('zonesTableBody');
+            try {
+                const res = await fetch(`${API_BASE}/zones`);
+                const data = await res.json();
+                const pZones = data.powerdns_zones || [];
+
+                if (pZones.length === 0 || pZones[0].error) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 18px;">${pZones[0]?.error ? escapeHtml(pZones[0].error) : 'No zones found in PowerDNS.'}</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                pZones.forEach(z => {
+                    const cleanName = (z.name || '').replace(/\.$/, '');
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${escapeHtml(cleanName)}</strong></td>
+                        <td><span class="badge">${escapeHtml(z.kind || 'Master')}</span></td>
+                        <td style="font-family: monospace; font-size: 0.82rem;">${escapeHtml(String(z.serial || '-'))}</td>
+                        <td style="text-align: right;">
+                            <a href="/app-accounts/?domain=${encodeURIComponent(cleanName)}" target="_blank" class="btn btn-secondary btn-sm">
+                                Manage Mail &rarr;
+                            </a>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--error); padding: 18px;">Failed to load zone list.</td></tr>';
+            }
+        }
+
+        function copyText(str) {
+            navigator.clipboard.writeText(str);
+            showAlert('Copied to clipboard.', 'info');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function escapeAttr(text) {
+            if (!text) return '';
+            return text.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        }
+
+        // --- Init ---
+        initTheme();
+        loadHealthAndConfig();
+        loadZoneList();
+    </script>
+</body>
+</html>

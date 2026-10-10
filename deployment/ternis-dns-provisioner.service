@@ -1,0 +1,15 @@
+[Unit]
+Description=Ternis DNS Zone Provisioner Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ternis-dns-provisioner/backend
+EnvironmentFile=-/opt/ternis-dns-provisioner/.env
+ExecStart=/usr/bin/python3 -m uvicorn app:app --host 127.0.0.1 --port 8089
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
